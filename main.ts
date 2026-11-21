@@ -438,7 +438,14 @@ function encodePNG(): Buffer {
 }
 
 const png = encodePNG();
-fs.mkdirSync("/output", { recursive: true });
-fs.writeFileSync("/output/entry.png", png);
-fs.writeFileSync("entry.png", png);
-console.log("wrote /output/entry.png and entry.png:", png.length, "bytes");
+// The grader runs the program with the repo mounted read-only at /bot and
+// a cwd that is not writable (sandbox user, image cwd): write ONLY to the
+// output dir the grader provides (MAKEFUN_OUTPUT_DIR, default /output).
+// Never write a convenience copy next to main.ts — that throw (EACCES on
+// the cwd) killed the round-1 run with exit 1 even though /output/entry.png
+// had already been written.
+const outputDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
+fs.mkdirSync(outputDir, { recursive: true });
+const outPath = `${outputDir}/entry.png`;
+fs.writeFileSync(outPath, png);
+console.log("wrote", outPath + ":", png.length, "bytes");
